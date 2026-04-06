@@ -157,7 +157,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
                     child: Text(
                       "UniFind Version 1.0.0",
                       style:
-                          TextStyle(color: Colors.grey.shade500, fontSize: 12),
+                      TextStyle(color: Colors.grey.shade500, fontSize: 12),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -226,7 +226,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
           const SizedBox(height: 12),
           Text(title,
               style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           const SizedBox(height: 4),
           Text(subtitle,
               style: TextStyle(color: Colors.grey.shade700, fontSize: 12)),

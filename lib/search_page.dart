@@ -118,9 +118,71 @@ class _SearchPageState extends State<SearchPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
-                    final itemDoc = filteredDocs[index];
-                    final item = itemDoc.data() as Map<String, dynamic>;
-                    return _buildSearchItemTile(item, isDark);
+                    final item = filteredDocs[index];
+                    bool isFound = item['status'] == 'Found';
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+
+                        // ✅ FIX APPLIED HERE
+                        onTap: () {
+                          final data =
+                          item.data() as Map<String, dynamic>;
+                          data['id'] = item.id; // 🔥 IMPORTANT FIX
+
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ItemDetailPage(
+                                item: data,
+                              ),
+                            ),
+                          );
+                        },
+
+                        leading: Icon(
+                          isFound ? Icons.check_circle : Icons.search,
+                          color: isFound ? Colors.green : Colors.red,
+                        ),
+
+                        title: Text(item['title'] ?? "No title"),
+
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item['location'] ?? ""),
+                            Text(
+                              item['description'] ?? "",
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ],
+                        ),
+
+                        trailing: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: isFound
+                                ? Colors.green.shade100
+                                : Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            item['status'],
+                            style: TextStyle(
+                              color: isFound
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
                   },
                 );
               },

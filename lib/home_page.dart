@@ -4,7 +4,8 @@ import 'profile_page.dart';
 import 'search_page.dart';
 import 'item_detail_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'main.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -30,33 +31,34 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isDark = MyApp.of(context)?.isDark ?? false;
-
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        selectedItemColor: const Color(0xFF3A7BD5),
-        unselectedItemColor: isDark ? Colors.white54 : Colors.grey,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: isDark ? Colors.grey.shade900 : Colors.white,
-        showUnselectedLabels: true,
-        elevation: 10,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search_outlined), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle_outline), label: 'Upload'),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Profile'),
-        ],
-      ),
-    );
+    switch (index) {
+      case 0:
+        break;
+      case 1:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const SearchPage()),
+        );
+        break;
+      case 2:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ReportItemPage()),
+        );
+        break;
+      case 3:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChatPage()),
+        );
+        break;
+      case 4:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfilePage()),
+        );
+        break;
+    }
   }
 }
 
@@ -124,18 +126,36 @@ class HomeBody extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
+
+            // 🔥 Welcome Section
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(2),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.blue.shade400, width: 2),
-                  ),
-                  child: const CircleAvatar(
-                    radius: 28,
-                    backgroundImage: AssetImage("assets/profile.jpg"),
+                const CircleAvatar(
+                  radius: 30,
+                  backgroundImage: AssetImage("assets/profile.jpg"),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser!.uid)
+                        .get(),
+                    builder: (context, snapshot) {
+                      String name = "User";
+
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        final data =
+                        snapshot.data!.data() as Map<String, dynamic>;
+                        name = data['name'] ?? "User";
+                      }
+
+                      return Text(
+                        "Welcome back, $name!",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w600),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 15),
@@ -161,58 +181,65 @@ class HomeBody extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 30),
-            Row(
-              children: [
-                Expanded(
-                  child: PremiumDashboardCard(
-                    title: "Lost",
-                    count: "2",
-                    label: "Active Reports",
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+
+            const SizedBox(height: 24),
+
+            // 🔥 Dynamic Cards
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('items')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                int lostCount = 0;
+                int foundCount = 0;
+
+                if (snapshot.hasData) {
+                  for (var doc in snapshot.data!.docs) {
+                    final item = doc.data() as Map<String, dynamic>;
+
+                    if (item['status'] == 'Lost') lostCount++;
+                    if (item['status'] == 'Found') foundCount++;
+                  }
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: DashboardCard(
+                        title: "Lost Items",
+                        subtitle: "$lostCount active lost reports",
+                        buttonText: "View Lost Items",
+                        color: Colors.blue.shade50,
+                        buttonColor: Colors.blue,
+                        icon: Icons.help_outline,
+                      ),
                     ),
-                    icon: Icons.search_rounded,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: PremiumDashboardCard(
-                    title: "Found",
-                    count: "1",
-                    label: "Recent Finds",
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF00B09B), Color(0xFF96C93D)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DashboardCard(
+                        title: "Items Found",
+                        subtitle: "$foundCount active found reports",
+                        buttonText: "View Found Items",
+                        color: Colors.green.shade50,
+                        buttonColor: Colors.green,
+                        icon: Icons.search,
+                      ),
                     ),
-                    icon: Icons.check_circle_outline_rounded,
-                  ),
-                ),
-              ],
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 35),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Recent Activity",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: const Text("See All", style: TextStyle(color: Colors.blue)),
-                ),
-              ],
+
+            const SizedBox(height: 24),
+
+            const Text(
+              "Recent Lost and Found Items",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
+
+            // --- ITEMS LIST ---
             StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection('items')
@@ -226,14 +253,72 @@ class HomeBody extends StatelessWidget {
                   return _buildEmptyState(isDark);
                 }
                 final items = snapshot.data!.docs;
-                return ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index].data() as Map<String, dynamic>;
-                    return PremiumItemTile(item: item, isDark: isDark);
-                  },
+
+                return Column(
+                  children: items.map((doc) {
+                    final item = doc.data() as Map<String, dynamic>;
+                    bool isFound = item['status'] == 'Found';
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 1,
+                      child: ListTile(
+                        leading: const Icon(Icons.inventory, size: 32),
+                        title: Text(item['title'] ?? ""),
+                        subtitle: Text(item['location'] ?? ""),
+                        trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: isFound
+                                    ? Colors.green.shade100
+                                    : Colors.red.shade100,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                item['status'],
+                                style: TextStyle(
+                                  color: isFound ? Colors.green : Colors.red,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) {
+                                      final data =
+                                      item as Map<String, dynamic>;
+                                      data['id'] = doc.id; // ✅ FIX
+
+                                      return ItemDetailPage(item: data);
+                                    },
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                "View Details",
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 );
               },
             ),
@@ -294,9 +379,8 @@ class ChatPlaceholder extends StatelessWidget {
   }
 }
 
-// --- PREMIUM COMPONENTS ---
-
-class PremiumDashboardCard extends StatelessWidget {
+// --- Dashboard Card (UNCHANGED) ---
+class DashboardCard extends StatelessWidget {
   final String title;
   final String count;
   final String label;
@@ -330,39 +414,14 @@ class PremiumDashboardCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            count,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.8),
-              fontSize: 12,
-            ),
-          ),
+          Icon(icon, color: buttonColor, size: 32),
+          const SizedBox(height: 12),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 6),
+          Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
+          const SizedBox(height: 8), // 🔥 CLEAN SPACING (NO BUTTON)
         ],
       ),
     );

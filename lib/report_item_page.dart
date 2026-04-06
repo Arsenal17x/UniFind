@@ -19,6 +19,10 @@ class _ReportItemPageState extends State<ReportItemPage> {
   final TextEditingController itemNameController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
+  // 🔥 ADDED (ONLY CHANGE)
+  final TextEditingController uniqueIdController = TextEditingController();
+  final TextEditingController insideItemController = TextEditingController();
+
   String? selectedCategory;
   String? selectedLocation;
 
@@ -45,6 +49,10 @@ class _ReportItemPageState extends State<ReportItemPage> {
           'status': isLost ? 'Lost' : 'Found',
           'userId': user?.uid,
           'createdAt': Timestamp.now(),
+
+          // 🔥 ADDED (ONLY CHANGE)
+          'uniqueIdentifier': isLost ? uniqueIdController.text : null,
+          'insideDetails': isLost ? insideItemController.text : null,
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -187,6 +195,43 @@ class _ReportItemPageState extends State<ReportItemPage> {
                 validator: (value) => value == null ? "Select location" : null,
               ),
               const SizedBox(height: 40),
+              // 🔥 ONLY CHANGE HERE (CONNECTED CONTROLLERS)
+              if (isLost) ...[
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border:
+                    Border.all(color: Colors.grey.shade300),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Security Questions",
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: uniqueIdController,
+                        decoration: const InputDecoration(
+                            labelText: "Unique identifier"),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      TextField(
+                        controller: insideItemController,
+                        decoration: const InputDecoration(
+                            labelText: "What’s inside?"),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
               // Submit Button
               SizedBox(

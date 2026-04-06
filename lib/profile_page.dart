@@ -7,6 +7,11 @@ import 'settings_page.dart';
 import 'help_support_page.dart';
 import 'item_detail_page.dart';
 
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'help_support_page.dart';
+import 'admin_panel_page.dart';
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -188,15 +193,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           isDark ? Colors.grey.shade900 : Colors.white,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Column(
-                          children: [
-                            Icon(Icons.inventory_2_outlined,
-                                color: Colors.grey.shade400, size: 30),
-                            const SizedBox(height: 8),
-                            Text("No reports yet",
-                                style:
-                                TextStyle(color: Colors.grey.shade500)),
-                          ],
+                        child: const Text(
+                          "⭐ welcome Back Nice To See You again",
+                          style: TextStyle(
+                              color: Colors.white, fontSize: 12),
                         ),
                       ),
                     ],
@@ -251,25 +251,59 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
 
-                      const SizedBox(height: 20),
-
-                      TextButton(
-                        onPressed: () async {
-                          await FirebaseAuth.instance.signOut();
-                          Navigator.pushAndRemoveUntil(
+                      _buildActionTile(
+                        icon: Icons.help_outline,
+                        title: "Help & Support",
+                        subtitle: "Get help or contact support",
+                        onTap: () {
+                          Navigator.push(
                             context,
-                            MaterialPageRoute(
-                                builder: (_) => AnimatedLoginPage()),
-                                (route) => false,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => const HelpSupportPage(),
+                              transitionsBuilder: (_, animation, __, child) {
+                                return SlideTransition(
+                                  position: Tween(
+                                    begin: const Offset(1, 0),
+                                    end: Offset.zero,
+                                  ).animate(animation),
+                                  child: child,
+                                );
+                              },
+                            ),
                           );
                         },
-                        child: const Text(
-                          "Logout",
-                          style: TextStyle(color: Colors.red),
-                        ),
                       ),
                     ],
                   ),
+                ),
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(FirebaseAuth.instance.currentUser!.uid)
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return const SizedBox();
+
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final role = data['role'] ?? "user";
+
+                    if (role != "admin") return const SizedBox();
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const AdminPanelPage(),
+                            ),
+                          );
+                        },
+                        child: const Text("Admin Panel"),
+                      ),
+                    );
+                  },
                 ),
 
                 const SizedBox(height: 40),
