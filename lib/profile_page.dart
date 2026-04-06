@@ -42,18 +42,20 @@ class _ProfilePageState extends State<ProfilePage> {
 
           final data = snapshot.data?.data() as Map<String, dynamic>? ?? {};
           final name = data['name'] ?? "User Name";
-          final email = data['email'] ?? FirebaseAuth.instance.currentUser!.email ?? "";
+          final email =
+              data['email'] ?? FirebaseAuth.instance.currentUser!.email ?? "";
           final profileImageUrl = data['profileImage'] ?? "";
 
           return SingleChildScrollView(
             child: Column(
               children: [
-                // --- PREMIUM HEADER ---
+
+                // 🔥 HEADER
                 Stack(
                   alignment: Alignment.center,
                   children: [
                     Container(
-                      height: 320,
+                      height: 260, // reduced height
                       width: double.infinity,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -67,38 +69,29 @@ class _ProfilePageState extends State<ProfilePage> {
                           bottomLeft: Radius.circular(40),
                           bottomRight: Radius.circular(40),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: themeColor.withValues(alpha: 0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
                       ),
                     ),
+
                     Column(
                       children: [
                         const SizedBox(height: 80),
+
+                        // PROFILE IMAGE
                         Stack(
                           children: [
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: Colors.white, width: 4),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withValues(alpha: 0.2),
-                                    blurRadius: 15,
-                                    spreadRadius: 5,
-                                  ),
-                                ],
+                                border:
+                                Border.all(color: Colors.white, width: 4),
                               ),
                               child: CircleAvatar(
-                                radius: 55,
+                                radius: 50,
                                 backgroundColor: Colors.white,
                                 backgroundImage: profileImageUrl.isNotEmpty
                                     ? NetworkImage(profileImageUrl)
-                                    : const AssetImage("assets/profpic.png") as ImageProvider,
+                                    : const AssetImage("assets/profpic.png")
+                                as ImageProvider,
                               ),
                             ),
                             Positioned(
@@ -107,7 +100,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: GestureDetector(
                                 onTap: () => Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => EditProfilePage()),
+                                  MaterialPageRoute(
+                                      builder: (_) => EditProfilePage()),
                                 ),
                                 child: Container(
                                   padding: const EdgeInsets.all(6),
@@ -115,40 +109,30 @@ class _ProfilePageState extends State<ProfilePage> {
                                     color: Colors.white,
                                     shape: BoxShape.circle,
                                   ),
-                                  child: Icon(Icons.edit, color: themeColor, size: 20),
+                                  child: Icon(Icons.edit,
+                                      color: themeColor, size: 18),
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 15),
+
+                        const SizedBox(height: 12),
+
                         Text(
                           name,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 26,
+                            fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
                           ),
                         ),
+
                         Text(
                           email,
                           style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.85),
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildPremiumStat("2", "Reported", Icons.assignment_outlined),
-                              const SizedBox(width: 20),
-                              _buildPremiumStat("1", "Helped", Icons.favorite_border),
-                            ],
+                            color: Colors.white.withOpacity(0.85),
+                            fontSize: 14,
                           ),
                         ),
                       ],
@@ -156,9 +140,38 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
 
-                const SizedBox(height: 30),
+                // 🔥 FLOATING STATS
+                Transform.translate(
+                  offset: const Offset(0, -35),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildPremiumStat(
+                            "2",
+                            "Reported",
+                            Icons.assignment_outlined,
+                            isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildPremiumStat(
+                            "1",
+                            "Helped",
+                            Icons.favorite_border,
+                            isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
 
-                // --- MY ACTIVITY SECTION ---
+                const SizedBox(height: 10),
+
+                // --- MY ACTIVITY ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
@@ -166,50 +179,25 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       _buildSectionHeader("My Recent Activity", isDark),
                       const SizedBox(height: 12),
-                      StreamBuilder<QuerySnapshot>(
-                        stream: FirebaseFirestore.instance
-                            .collection('items')
-                            .where('userId', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
-                            .orderBy('createdAt', descending: true)
-                            .limit(2)
-                            .snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(child: Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ));
-                          }
-                          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                            return Container(
-                              padding: const EdgeInsets.all(20),
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: isDark ? Colors.grey.shade900 : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Column(
-                                children: [
-                                  Icon(Icons.inventory_2_outlined, color: Colors.grey.shade400, size: 30),
-                                  const SizedBox(height: 8),
-                                  Text("No reports yet", style: TextStyle(color: Colors.grey.shade500)),
-                                ],
-                              ),
-                            );
-                          }
-                          return Column(
-                            children: snapshot.data!.docs.map((doc) {
-                              final item = doc.data() as Map<String, dynamic>;
-                              return GestureDetector(
-                                onTap: () => Navigator.push(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => ItemDetailPage(item: item)),
-                                ),
-                                child: _buildSimpleItemTile(item, isDark),
-                              );
-                            }).toList(),
-                          );
-                        },
+
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color:
+                          isDark ? Colors.grey.shade900 : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(Icons.inventory_2_outlined,
+                                color: Colors.grey.shade400, size: 30),
+                            const SizedBox(height: 8),
+                            Text("No reports yet",
+                                style:
+                                TextStyle(color: Colors.grey.shade500)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -217,95 +205,74 @@ class _ProfilePageState extends State<ProfilePage> {
 
                 const SizedBox(height: 24),
 
-                // --- ACTIONS SECTION ---
+                // --- ACTIONS ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionHeader("Account & Support", isDark),
-                      const SizedBox(height: 12),
-                      _buildPremiumActionTile(
-                        icon: Icons.person_outline_rounded,
-                        title: "Edit Profile",
-                        subtitle: "Change name, photo, and info",
-                        color: Colors.indigo,
-                        isDark: isDark,
-                        onTap: () => Navigator.push(
+
+                      _buildActionTile(
+                        Icons.person_outline,
+                        "Edit Profile",
+                        "Change name, photo, and info",
+                        Colors.indigo,
+                        isDark,
+                            () => Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (_) => EditProfilePage()),
+                          MaterialPageRoute(
+                              builder: (_) => EditProfilePage()),
                         ),
                       ),
 
-                      _buildPremiumActionTile(
-                        icon: Icons.chat_bubble_outline,
-                        title: "Chat Support",
-                        subtitle: "Chat support coming soon",
-                        color: Colors.pink,
-                        isDark: isDark,
-                        onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Chat support is under development")),
+                      _buildActionTile(
+                        Icons.settings_outlined,
+                        "Settings",
+                        "Notifications, Theme",
+                        Colors.blueGrey,
+                        isDark,
+                            () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const SettingsPage()),
+                        ),
+                      ),
+
+                      _buildActionTile(
+                        Icons.help_outline,
+                        "Help & Support",
+                        "FAQs, Contact Us",
+                        Colors.teal,
+                        isDark,
+                            () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) =>
+                              const HelpSupportPage()),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      TextButton(
+                        onPressed: () async {
+                          await FirebaseAuth.instance.signOut();
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                                builder: (_) => AnimatedLoginPage()),
+                                (route) => false,
                           );
                         },
-                      ),
-                      _buildPremiumActionTile(
-                        icon: Icons.settings_outlined,
-                        title: "Settings",
-                        subtitle: "Notifications, Theme, Support",
-                        color: Colors.blueGrey,
-                        isDark: isDark,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SettingsPage()),
+                        child: const Text(
+                          "Logout",
+                          style: TextStyle(color: Colors.red),
                         ),
                       ),
-
-                      _buildPremiumActionTile(
-                        icon: Icons.help_outline_rounded,
-                        title: "Help & Support",
-                        subtitle: "FAQs, Contact Us, Guidelines",
-                        color: Colors.teal,
-                        isDark: isDark,
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const HelpSupportPage()),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity,
-                        child: TextButton(
-                          onPressed: () async {
-                            final navigator = Navigator.of(context);
-                            await FirebaseAuth.instance.signOut();
-                            navigator.pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (_) => AnimatedLoginPage()),
-                              (route) => false,
-                            );
-                          },
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            backgroundColor: Colors.red.withValues(alpha: 0.1),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
-                          ),
-                          child: const Text(
-                            "Log Out",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 40),
               ],
             ),
           );
@@ -314,6 +281,48 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // 🔹 STAT CARD
+  Widget _buildPremiumStat(
+      String value, String label, IconData icon, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey.shade900 : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          if (!isDark)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
+            ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.blue, size: 22),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: isDark ? Colors.grey : Colors.grey.shade600,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔹 SECTION TITLE
   Widget _buildSectionHeader(String title, bool isDark) {
     return Text(
       title,
@@ -321,170 +330,33 @@ class _ProfilePageState extends State<ProfilePage> {
         fontSize: 14,
         fontWeight: FontWeight.bold,
         color: isDark ? Colors.white70 : Colors.grey.shade600,
-        letterSpacing: 1.2,
       ),
     );
   }
 
-  Widget _buildPremiumStat(String value, String label, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 20),
-          const SizedBox(width: 8),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                value,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPremiumActionTile({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required Color color,
-    required bool isDark,
-    VoidCallback? onTap,
-  }) {
+  // 🔹 ACTION TILE
+  Widget _buildActionTile(
+      IconData icon,
+      String title,
+      String subtitle,
+      Color color,
+      bool isDark,
+      VoidCallback onTap,
+      ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey.shade900 : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          if (!isDark)
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-        ],
       ),
       child: ListTile(
         onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: isDark ? Colors.white : Colors.black87,
-          ),
-        ),
-        subtitle: subtitle != null
-            ? Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? Colors.grey : Colors.grey.shade500,
-                ),
-              )
-            : null,
-        trailing: Icon(
-          Icons.chevron_right,
-          color: isDark ? Colors.grey : Colors.grey.shade400,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSimpleItemTile(Map<String, dynamic> item, bool isDark) {
-    bool isFound = item['status'] == 'Found';
-    final themeColor = const Color(0xFF3A7BD5);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isDark ? Colors.grey.shade900.withValues(alpha: 0.5) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? Colors.white10 : Colors.grey.shade200,
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: themeColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              item['category'] == 'Electronics' ? Icons.devices : Icons.inventory_2_outlined,
-              color: themeColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item['title'] ?? "Unnamed Item",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : Colors.black87,
-                  ),
-                ),
-                Text(
-                  item['location'] ?? "Unknown Location",
-                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: isFound ? Colors.green.withValues(alpha: 0.1) : Colors.red.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              item['status'],
-              style: TextStyle(
-                color: isFound ? Colors.green : Colors.red,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        leading: Icon(icon, color: color),
+        title: Text(title,
+            style: TextStyle(
+                color: isDark ? Colors.white : Colors.black)),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
       ),
     );
   }
