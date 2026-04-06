@@ -4,6 +4,8 @@ import 'profile_page.dart';
 import 'search_page.dart';
 import 'item_detail_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -14,6 +16,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -22,27 +25,24 @@ class _HomePageState extends State<HomePage> {
     switch (index) {
       case 0:
         break;
-
       case 1:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const SearchPage()),
         );
         break;
-
       case 2:
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const ReportItemPage()),
         );
         break;
-
       case 3:
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("💬 Chat selected")),
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const ChatPage()),
         );
         break;
-
       case 4:
         Navigator.push(
           context,
@@ -96,59 +96,99 @@ class _HomePageState extends State<HomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome
+
+            // 🔥 Welcome Section
             Row(
-              children: const [
-                CircleAvatar(
+              children: [
+                const CircleAvatar(
                   radius: 30,
                   backgroundImage: AssetImage("assets/profile.jpg"),
                 ),
-                SizedBox(width: 12),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    "Welcome back, Partho!",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  child: FutureBuilder<DocumentSnapshot>(
+                    future: FirebaseFirestore.instance
+                        .collection('users')
+                        .doc(FirebaseAuth.instance.currentUser!.uid)
+                        .get(),
+                    builder: (context, snapshot) {
+                      String name = "User";
+
+                      if (snapshot.hasData && snapshot.data!.exists) {
+                        final data =
+                        snapshot.data!.data() as Map<String, dynamic>;
+                        name = data['name'] ?? "User";
+                      }
+
+                      return Text(
+                        "Welcome back, $name!",
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.w600),
+                      );
+                    },
                   ),
                 ),
               ],
             ),
+
             const SizedBox(height: 24),
 
-            // Cards (unchanged UI)
-            Row(
-              children: [
-                Expanded(
-                  child: DashboardCard(
-                    title: "Lost Items",
-                    subtitle: "2 active lost reports",
-                    buttonText: "View Lost Items",
-                    color: Colors.blue.shade50,
-                    buttonColor: Colors.blue,
-                    icon: Icons.help_outline,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DashboardCard(
-                    title: "Items Found",
-                    subtitle: "1 active found report",
-                    buttonText: "View Found Items",
-                    color: Colors.green.shade50,
-                    buttonColor: Colors.green,
-                    icon: Icons.search,
-                  ),
-                ),
-              ],
+            // 🔥 Dynamic Cards
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('items')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                int lostCount = 0;
+                int foundCount = 0;
+
+                if (snapshot.hasData) {
+                  for (var doc in snapshot.data!.docs) {
+                    final item = doc.data() as Map<String, dynamic>;
+
+                    if (item['status'] == 'Lost') lostCount++;
+                    if (item['status'] == 'Found') foundCount++;
+                  }
+                }
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: DashboardCard(
+                        title: "Lost Items",
+                        subtitle: "$lostCount active lost reports",
+                        buttonText: "View Lost Items",
+                        color: Colors.blue.shade50,
+                        buttonColor: Colors.blue,
+                        icon: Icons.help_outline,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: DashboardCard(
+                        title: "Items Found",
+                        subtitle: "$foundCount active found reports",
+                        buttonText: "View Found Items",
+                        color: Colors.green.shade50,
+                        buttonColor: Colors.green,
+                        icon: Icons.search,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
+
             const SizedBox(height: 24),
 
             const Text(
               "Recent Lost and Found Items",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
 
-            // ✅ Dynamic List (replaces dummy data)
+            // --- ITEMS LIST ---
             StreamBuilder(
               stream: FirebaseFirestore.instance
                   .collection('items')
@@ -202,13 +242,18 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                             const SizedBox(height: 4),
-
                             GestureDetector(
                               onTap: () {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => ItemDetailPage(item: item),
+                                    builder: (_) {
+                                      final data =
+                                      item as Map<String, dynamic>;
+                                      data['id'] = doc.id; // ✅ FIX
+
+                                      return ItemDetailPage(item: data);
+                                    },
                                   ),
                                 );
                               },
@@ -254,7 +299,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// --- Dashboard Card ---
+// --- Dashboard Card (UNCHANGED) ---
 class DashboardCard extends StatelessWidget {
   final String title;
   final String subtitle;
@@ -287,21 +332,11 @@ class DashboardCard extends StatelessWidget {
           Icon(icon, color: buttonColor, size: 32),
           const SizedBox(height: 12),
           Text(title,
-              style:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              style: const TextStyle(
+                  fontSize: 16, fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(subtitle, style: TextStyle(color: Colors.grey.shade700)),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: buttonColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            onPressed: () {},
-            child: Text(buttonText),
-          ),
+          const SizedBox(height: 8), // 🔥 CLEAN SPACING (NO BUTTON)
         ],
       ),
     );

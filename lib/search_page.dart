@@ -85,13 +85,18 @@ class _SearchPageState extends State<SearchPage> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
-                        // ✅ CLICK ADDED HERE
+
+                        // ✅ FIX APPLIED HERE
                         onTap: () {
+                          final data =
+                          item.data() as Map<String, dynamic>;
+                          data['id'] = item.id; // 🔥 IMPORTANT FIX
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => ItemDetailPage(
-                                item: item.data() as Map<String, dynamic>,
+                                item: data,
                               ),
                             ),
                           );

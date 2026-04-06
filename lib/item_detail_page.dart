@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'claim_page.dart';
 
 class ItemDetailPage extends StatelessWidget {
   final Map<String, dynamic> item;
@@ -19,7 +20,6 @@ class ItemDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Name
             Text(
               item['title'] ?? "",
               style: const TextStyle(
@@ -28,7 +28,6 @@ class ItemDetailPage extends StatelessWidget {
 
             const SizedBox(height: 15),
 
-            // 🔹 Category
             Text(
               "Category: ${item['category'] ?? "N/A"}",
               style: const TextStyle(fontSize: 16),
@@ -36,7 +35,6 @@ class ItemDetailPage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // 🔹 Description
             Text(
               "Description: ${item['description'] ?? "No description"}",
               style: const TextStyle(fontSize: 16),
@@ -44,7 +42,6 @@ class ItemDetailPage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // 🔹 Location
             Text(
               "Location: ${item['location'] ?? ""}",
               style: const TextStyle(fontSize: 16),
@@ -52,7 +49,6 @@ class ItemDetailPage extends StatelessWidget {
 
             const SizedBox(height: 10),
 
-            // 🔹 Status
             Text(
               "Status: ${item['status']}",
               style: TextStyle(
@@ -63,7 +59,34 @@ class ItemDetailPage extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // 🔥 Start Chat Button (UPDATED LOGIC ONLY)
+            // 🔥 CLAIM BUTTON
+            if (isFound)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ClaimPage(
+                          itemId: item['id'] ?? "",
+                          itemName: item['title'],
+                          foundBy: item['userId'],
+                          category: item['category'], // 🔥 ADD THIS LINE
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text("Claim Item"),
+                ),
+              ),
+
+            const SizedBox(height: 10),
+
+            // 🔹 Contact Button
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -115,7 +138,6 @@ class ItemDetailPage extends StatelessWidget {
                         ],
                       ),
                     );
-
                   } catch (e) {
                     print("ERROR: $e");
                   }
